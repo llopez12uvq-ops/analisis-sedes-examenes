@@ -801,6 +801,82 @@
       .period-summary { grid-template-columns:1fr; }
     }
 
+
+    .province-bars {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0 20px;
+    }
+
+    .prov-bar-row {
+      display: grid;
+      grid-template-columns: minmax(110px, 180px) minmax(0, 1fr) 70px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .prov-bar-name {
+      font-size: 12px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .prov-bar-track {
+      height: 18px;
+      background: #edf0f2;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .prov-bar-fill {
+      height: 100%;
+      background: var(--brand);
+      border-radius: 999px;
+    }
+
+    .prov-bar-value {
+      text-align: right;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--brand-soft);
+      color: var(--brand);
+      margin-right: 6px;
+    }
+
+    .coverage-none {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #fff4cc;
+      color: #7a5a00;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      .prov-bar-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 8px 0;
+        border-bottom: 1px solid #edf0f2;
+      }
+
+      .prov-bar-value {
+        text-align: left;
+      }
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
       .year-compare-grid {
@@ -973,6 +1049,7 @@
   <nav class="tabs">
     <button data-tab="resumen" class="active">Resumen</button>
     <button data-tab="candidatas">Oportunidades de nuevas sedes</button>
+    <button data-tab="topprovincias">Top 10 provincias</button>
     <button data-tab="origen">Origen → sede</button>
     <button data-tab="sede">Sede → origen</button>
     <button data-tab="propuesta">Propuesta 2027</button>
@@ -1493,6 +1570,105 @@
 
 
 
+
+  function cargarTopProvincias() {
+    const cont = document.getElementById('tabla-topprovincias');
+    if (!cont) return;
+
+    cont.innerHTML = '<div class="loading">Calculando top 10…</div>';
+
+    jsonp({ api: 'top-provinces' }, (err, data) => {
+      if (err) {
+        cont.innerHTML = '<div class="error">' + esc(err.message) + '</div>';
+        return;
+      }
+      renderTopProvincias(data.filas || []);
+    });
+  }
+
+  function renderTopProvincias(rows) {
+    const cont = document.getElementById('tabla-topprovincias');
+    const chart = document.getElementById('topprov-chart');
+
+    if (!rows.length) {
+      cont.innerHTML = '<div class="empty">No hay datos suficientes.</div>';
+      chart.innerHTML = '';
+      return;
+    }
+
+    const max = Math.max(...rows.map(r => Number(r.estudiantesPeriodo || 0)), 1);
+
+    chart.innerHTML = rows.map(r => `
+      <div class="prov-bar-row">
+        <div class="prov-bar-name">${esc(r.posicion)}. ${esc(r.provincia)}</div>
+        <div class="prov-bar-track">
+          <div class="prov-bar-fill" style="width:${((Number(r.estudiantesPeriodo || 0)/max)*100).toFixed(1)}%"></div>
+        </div>
+        <div class="prov-bar-value">${esc(r.estudiantesPeriodo)}</div>
+      </div>
+    `).join('');
+
+    cont.innerHTML = `
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Provincia</th>
+            <th>Región</th>
+            <th>Residentes</th>
+            <th>Estudiantes 2024–2026</th>
+            <th class="year-2024">2024</th>
+            <th class="year-2025">2025</th>
+            <th class="year-2026">2026</th>
+            <th>Inscripciones totales</th>
+            <th>Sede más utilizada</th>
+            <th>Cobertura actual</th>
+            <th>Tendencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td data-label="#"><span class="rank-badge">${esc(r.posicion)}</span></td>
+              <td data-label="Provincia"><strong>${esc(r.provincia)}</strong></td>
+              <td data-label="Región">${esc(r.region)}</td>
+              <td data-label="Residentes">${esc(r.residentes)}</td>
+              <td data-label="Estudiantes 2024–2026">
+                <strong>${esc(r.estudiantesPeriodo)}</strong>
+                ${r.participacion == null ? '' : `<br>${badgePorcentaje(r.participacion)} de residentes`}
+              </td>
+              ${provYearCell(r, '2024', 'year-2024')}
+              ${provYearCell(r, '2025', 'year-2025')}
+              ${provYearCell(r, '2026', 'year-2026')}
+              <td data-label="Inscripciones totales"><strong>${esc(r.inscripcionesPeriodo)}</strong></td>
+              <td data-label="Sede más utilizada">
+                <strong>${esc(r.sedePrincipal || '—')}</strong>
+                ${r.concentracion == null ? '' : `<br>${badgePorcentaje(r.concentracion)} de inscripciones`}
+              </td>
+              <td data-label="Cobertura actual">
+                ${r.sinCobertura ? '<span class="coverage-none">Sin sede activa</span>' : esc(r.coberturaActual)}
+              </td>
+              <td data-label="Tendencia">
+                <span class="${claseTendencia(r.tendencia)}">${esc(r.tendencia)}</span>
+                ${sparkAnios(r.inscripcionesPorAnio)}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function provYearCell(r, year, cls) {
+    const est = r.estudiantesPorAnio?.[year] ?? 0;
+    const ins = r.inscripcionesPorAnio?.[year] ?? 0;
+    return `<td data-label="${year}" class="${cls}">
+      <strong>${esc(est)}</strong> estudiantes<br>
+      <span class="sub">${esc(ins)} inscripciones</span>
+    </td>`;
+  }
+
+
   function prepararOportunidades() {
     const regionSel = document.getElementById('opp-region');
     const regiones = (window.__opcionesSedes && window.__opcionesSedes.regiones) || [];
@@ -1749,6 +1925,7 @@
       document.querySelectorAll('[id^="tab-"]').forEach(s => s.classList.add('hidden'));
       document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
       if (btn.dataset.tab === 'candidatas') cargarOportunidades();
+      if (btn.dataset.tab === 'topprovincias') cargarTopProvincias();
     });
   });
 
