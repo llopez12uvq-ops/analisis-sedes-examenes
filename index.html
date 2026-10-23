@@ -250,8 +250,78 @@
       display: none;
     }
 
+
+    .evo-filtros {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(160px, 0.7fr);
+      gap: 12px;
+      align-items: end;
+      margin: 14px 0 18px;
+    }
+
+    .evo-title {
+      font-weight: 700;
+      margin: 4px 0 12px;
+    }
+
+    .chart-panel {
+      margin-top: 20px;
+    }
+
+    .chart-panel h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .mini-chart {
+      min-height: 190px;
+      display: flex;
+      align-items: flex-end;
+      gap: 22px;
+      padding: 18px 12px 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fafbfc;
+    }
+
+    .bar-item {
+      flex: 1 1 0;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .bar-value {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .bar-track {
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .bar-fill {
+      width: min(58px, 75%);
+      background: var(--brand);
+      border-radius: 6px 6px 0 0;
+      min-height: 2px;
+    }
+
+    .bar-label {
+      margin-top: 7px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
+      .evo-filtros {
+        grid-template-columns: 1fr 1fr;
+      }
+
       .filtros {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -276,7 +346,8 @@
         border-radius: 12px;
       }
 
-      .filtros {
+      .filtros,
+      .evo-filtros {
         grid-template-columns: 1fr;
         gap: 10px;
       }
@@ -398,6 +469,7 @@
 
   <nav class="tabs">
     <button data-tab="resumen" class="active">Resumen</button>
+    <button data-tab="evolucion">Evolución 2024–2026</button>
     <button data-tab="candidatas">Nuevas sedes</button>
     <button data-tab="origen">Origen → sede</button>
     <button data-tab="sede">Sede → origen</button>
@@ -415,6 +487,52 @@
           Las inscripciones muestran demanda; las actas muestran uso efectivo de las mesas.
           Los conteos pequeños de estudiantes se ocultan según el umbral de privacidad.
         </p>
+      </div>
+    </section>
+
+
+    <section id="tab-evolucion" class="hidden">
+      <div class="panel">
+        <h2>Evolución 2024–2026</h2>
+        <p class="sub">
+          Compara los años con el mismo criterio. El filtro “Año” general no se aplica en esta vista.
+          Elegí qué querés comparar y la localidad, provincia, sede o región.
+        </p>
+
+        <div class="evo-filtros">
+          <div>
+            <label for="evo-tipo">Comparar por</label>
+            <select id="evo-tipo">
+              <option value="localidad">Localidad</option>
+              <option value="provincia">Provincia</option>
+              <option value="sede">Sede</option>
+              <option value="region">Región</option>
+            </select>
+          </div>
+          <div>
+            <label for="evo-valor">Valor</label>
+            <select id="evo-valor"></select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="evo-actualizar">Comparar años</button>
+          </div>
+        </div>
+
+        <div id="evo-titulo" class="evo-title"></div>
+        <div id="tabla-evolucion" class="table-wrap"></div>
+
+        <div class="chart-panel">
+          <h3>Inscripciones por año</h3>
+          <div id="grafico-inscripciones" class="mini-chart"></div>
+        </div>
+
+        <div class="chart-panel">
+          <h3>Estudiantes con inscripciones por año</h3>
+          <div id="grafico-estudiantes" class="mini-chart"></div>
+        </div>
+
+        <div id="evo-nota" class="note"></div>
       </div>
     </section>
 
@@ -500,6 +618,9 @@
       llenarSelect('sede', data.sedes);
       llenarSelect('periodo', data.periodos);
 
+      window.__opcionesSedes = data;
+      prepararEvolucion();
+
       filtrosIds.forEach(id => {
         document.getElementById(id).addEventListener('change', actualizar);
       });
@@ -549,13 +670,13 @@
     const r = data.resumen;
 
     document.getElementById('kpis').innerHTML = [
-      kpi('Estudiantes únicos', r.estudiantes),
+      kpi('Estudiantes con inscripciones', r.estudiantes),
       kpi('Inscripciones', r.inscripciones),
-      kpi('Presentes', r.presentes),
-      kpi('Ausentes', r.ausentes),
-      kpi('Presentismo', porcentaje(r.presentismo)),
-      kpi('Aprobados', r.aprobados),
-      kpi('Desaprobados', r.desaprobados)
+      kpi('Presentes', mostrarNulo(r.presentes)),
+      kpi('Ausentes', mostrarNulo(r.ausentes)),
+      kpi('Presentismo', r.presentismo === null ? '—' : porcentaje(r.presentismo)),
+      kpi('Aprobados', mostrarNulo(r.aprobados)),
+      kpi('Desaprobados', mostrarNulo(r.desaprobados))
     ].join('');
 
     renderCandidatas(data.candidatas || []);
@@ -566,6 +687,129 @@
     document.getElementById('estado').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
   }
+
+
+  function prepararEvolucion() {
+    const tipo = document.getElementById('evo-tipo');
+    const valor = document.getElementById('evo-valor');
+    const boton = document.getElementById('evo-actualizar');
+
+    function actualizarValores() {
+      const opciones = window.__opcionesSedes || {};
+      const mapa = {
+        localidad: opciones.localidades || [],
+        provincia: opciones.provincias || [],
+        sede: opciones.sedes || [],
+        region: opciones.regiones || []
+      };
+      valor.innerHTML = '';
+      (mapa[tipo.value] || []).forEach(v => {
+        const op = document.createElement('option');
+        op.value = v;
+        op.textContent = v;
+        valor.appendChild(op);
+      });
+    }
+
+    tipo.addEventListener('change', actualizarValores);
+    boton.addEventListener('click', cargarEvolucion);
+    actualizarValores();
+  }
+
+  function cargarEvolucion() {
+    const tipo = document.getElementById('evo-tipo').value;
+    const valor = document.getElementById('evo-valor').value;
+    const periodo = document.getElementById('periodo').value;
+
+    const cont = document.getElementById('tabla-evolucion');
+    cont.innerHTML = '<div class="loading">Comparando años…</div>';
+
+    const params = { api: 'evolution', tipo, valor };
+    if (periodo) params.periodo = periodo;
+
+    jsonp(params, (err, data) => {
+      if (err) {
+        cont.innerHTML = '<div class="error">' + esc(err.message) + '</div>';
+        return;
+      }
+      renderEvolucion(data);
+    });
+  }
+
+  function renderEvolucion(data) {
+    const rows = data.filas || [];
+    const tipo = data.tipo || '';
+    const esSede = tipo === 'sede';
+
+    document.getElementById('evo-titulo').textContent =
+      (data.valor || 'Todos') + (data.periodo ? ' · ' + data.periodo : '');
+
+    const headers = esSede
+      ? ['Año', 'Estudiantes con inscripciones', 'Inscripciones', 'Presentes', 'Ausentes', 'Presentismo']
+      : ['Año', 'Estudiantes residentes', 'Estudiantes con inscripciones', 'Inscripciones', 'Sede más utilizada'];
+
+    const valores = rows.map(r => esSede
+      ? [
+          r.anio,
+          r.estudiantesInscritos,
+          r.inscripciones,
+          mostrarNulo(r.presentes),
+          mostrarNulo(r.ausentes),
+          r.presentismo === null ? '—' : porcentaje(r.presentismo)
+        ]
+      : [
+          r.anio,
+          r.residentes,
+          r.estudiantesInscritos,
+          r.inscripciones,
+          r.sedePrincipal || '—'
+        ]
+    );
+
+    document.getElementById('tabla-evolucion').innerHTML = tablaSimple(headers, valores);
+
+    renderMiniChart(
+      'grafico-inscripciones',
+      rows.map(r => ({ label: r.anio, value: Number(r.inscripciones || 0), display: r.inscripciones }))
+    );
+
+    renderMiniChart(
+      'grafico-estudiantes',
+      rows.map(r => ({
+        label: r.anio,
+        value: r.estudiantesInscritosGrafico,
+        display: r.estudiantesInscritos
+      }))
+    );
+
+    document.getElementById('evo-nota').textContent =
+      data.notaActas || 'Los conteos pequeños de estudiantes se muestran como <5 y no se grafican con su valor exacto.';
+  }
+
+  function renderMiniChart(id, rows) {
+    const cont = document.getElementById(id);
+    const numeric = rows.filter(r => r.value !== null && r.value !== undefined);
+    const max = numeric.length ? Math.max(...numeric.map(r => Number(r.value || 0)), 1) : 1;
+
+    cont.innerHTML = rows.map(r => {
+      const visible = r.value !== null && r.value !== undefined;
+      const h = visible ? Math.max(2, (Number(r.value || 0) / max) * 120) : 0;
+      return `
+        <div class="bar-item">
+          <div class="bar-value">${esc(r.display ?? '—')}</div>
+          <div class="bar-track">
+            ${visible ? `<div class="bar-fill" style="height:${h.toFixed(1)}px"></div>` : ''}
+          </div>
+          <div class="bar-label">${esc(r.label)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function mostrarNulo(v) {
+    return v === null || v === undefined ? '—' : v;
+  }
+
 
   function renderCandidatas(rows) {
     const cont = document.getElementById('tabla-candidatas');
@@ -672,6 +916,7 @@
   }
 
   function meter(value) {
+    if (value === null || value === undefined) return '—';
     const n = Math.max(0, Math.min(1, Number(value || 0)));
     return `
       <div>${porcentaje(n)}</div>
@@ -684,6 +929,7 @@
   }
 
   function numero(v) {
+    if (v === null || v === undefined) return '—';
     return Number(v || 0).toFixed(1);
   }
 
@@ -716,6 +962,7 @@
 
       document.querySelectorAll('[id^="tab-"]').forEach(s => s.classList.add('hidden'));
       document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+      if (btn.dataset.tab === 'evolucion') cargarEvolucion();
     });
   });
 
