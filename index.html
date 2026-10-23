@@ -1178,7 +1178,6 @@
     <button data-tab="resumen" class="active">Resumen</button>
     <button data-tab="candidatas">Oportunidades de nuevas sedes</button>
     <button data-tab="topprovincias">Top 10 provincias</button>
-    <button data-tab="sede">Sede → origen</button>
     <button data-tab="propuesta">Mesas 2027</button>
   </nav>
 
@@ -1319,14 +1318,6 @@
       </div>
     </section>
 
-    <section id="tab-sede" class="hidden">
-      <div class="panel">
-        <h2>Sede → origen</h2>
-        <p class="sub">Para la sede seleccionada, muestra de qué localidades provienen sus estudiantes.</p>
-        <div id="tabla-sede" class="table-wrap"></div>
-      </div>
-    </section>
-
     <section id="tab-propuesta" class="hidden">
       <div class="panel">
         <div class="section-caption">
@@ -1376,17 +1367,30 @@
     const qs = new URLSearchParams(params);
     script.src = API_URL + '?' + qs.toString();
 
+    let finished = false;
+    const timer = setTimeout(() => {
+      if (finished) return;
+      finished = true;
+      cleanup();
+      callback(new Error('La consulta tardó demasiado. Revisá que la última versión de App.gs esté desplegada.'));
+    }, 20000);
+
     const cleanup = () => {
-      delete window[cbName];
-      script.remove();
+      clearTimeout(timer);
+      try { delete window[cbName]; } catch (_) {}
+      if (script.parentNode) script.remove();
     };
 
     window[cbName] = data => {
+      if (finished) return;
+      finished = true;
       cleanup();
       callback(null, data);
     };
 
     script.onerror = () => {
+      if (finished) return;
+      finished = true;
       cleanup();
       callback(new Error('No se pudo consultar la API.'));
     };
@@ -1449,25 +1453,30 @@
 
     jsonp(obtenerFiltros(), (err, data) => {
       if (err) return mostrarError(err.message);
-      render(data);
+      try {
+        render(data);
+      } catch (e) {
+        console.error(e);
+        mostrarError('No se pudo mostrar el resumen: ' + e.message);
+      }
     });
   }
 
   function render(data) {
-    const r = data.resumen;
+    const r = data.resumen || {};
 
     document.getElementById('kpis').innerHTML = [
-      kpi('Estudiantes con inscripciones', r.estudiantes),
-      kpi('Inscripciones', r.inscripciones),
+      kpi('Estudiantes que se inscribieron', r.estudiantes ?? '—'),
+      kpi('Inscripciones a finales', r.inscripciones ?? 0),
       kpi('Presentes', mostrarNulo(r.presentes)),
       kpi('Ausentes', mostrarNulo(r.ausentes)),
-      kpi('Presentismo', r.presentismo === null ? '—' : porcentaje(r.presentismo)),
+      kpi('Presentismo', r.presentismo === null || r.presentismo === undefined ? '—' : porcentaje(r.presentismo)),
       kpi('Aprobados', mostrarNulo(r.aprobados)),
       kpi('Desaprobados', mostrarNulo(r.desaprobados))
     ].join('');
-    renderOrigen(data.origenSede || []);
-    renderSede(data.sedeOrigen || []);
-    renderPropuesta(data.propuesta || []);
+
+    renderFlujoContextual(data);
+    cargarComparacionAnios();
 
     document.getElementById('estado').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
@@ -2128,26 +2137,11 @@
     renderOportunidades(rows || []);
   }
 
-  function renderOrigen(rows) {
-    document.getElementById('tabla-origen').innerHTML = tablaSimple(
-      ['Sede', 'Estudiantes únicos'],
-      rows.map(r => [r.sede, r.estudiantes])
-    );
-  }
 
-  function renderSede(rows) {
-    document.getElementById('tabla-sede').innerHTML = tablaSimple(
-      ['Localidad', 'Provincia', 'Estudiantes únicos'],
-      rows.map(r => [r.localidad, r.provincia, r.estudiantes])
-    );
-  }
 
-  function renderPropuesta(rows) {
-    document.getElementById('tabla-propuesta').innerHTML = tablaSimple(
-      ['Período', 'Sede', 'Región', 'Situación'],
-      rows.map(r => [r.periodo, r.sede, r.region, r.situacion])
-    );
-  }
+
+
+
 
   function htmlCelda(html) {
     return { __html: html };
