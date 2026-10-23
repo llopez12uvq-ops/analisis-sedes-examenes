@@ -316,6 +316,64 @@
       color: var(--muted);
     }
 
+
+    .metric-combo {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .metric-combo .count {
+      font-weight: 800;
+      font-size: 1.05em;
+    }
+
+    .pct-badge {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .pct-low {
+      background: #f5f6f7;
+      color: #667085;
+    }
+
+    .pct-mid {
+      background: #fff4cc;
+      color: #7a5a00;
+    }
+
+    .pct-high {
+      background: #e7f4ec;
+      color: #246b43;
+    }
+
+    .pct-very-high {
+      background: #dceef7;
+      color: #185f82;
+    }
+
+    .kpi.accent-green {
+      border-left: 4px solid #4f8a68;
+    }
+
+    .kpi.accent-amber {
+      border-left: 4px solid #c9992e;
+    }
+
+    .kpi.accent-blue {
+      border-left: 4px solid #3d7ea6;
+    }
+
+    .kpi.accent-neutral {
+      border-left: 4px solid #98a2b3;
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
       .evo-filtros {
@@ -745,22 +803,22 @@
       (data.valor || 'Todos') + (data.periodo ? ' · ' + data.periodo : '');
 
     const headers = esSede
-      ? ['Año', 'Estudiantes con inscripciones', 'Inscripciones', 'Presentes', 'Ausentes', 'Presentismo']
-      : ['Año', 'Estudiantes residentes', 'Estudiantes con inscripciones', 'Inscripciones', 'Sede más utilizada'];
+      ? ['Año', 'Estudiantes que se inscribieron', 'Inscripciones', 'Presentes', 'Ausentes', 'Aprobación']
+      : ['Año', 'Estudiantes residentes', 'Estudiantes que se inscribieron', 'Inscripciones', 'Sede más utilizada'];
 
     const valores = rows.map(r => esSede
       ? [
           r.anio,
           r.estudiantesInscritos,
           r.inscripciones,
-          mostrarNulo(r.presentes),
-          mostrarNulo(r.ausentes),
+          htmlCelda(cantidadConPorcentaje(r.presentes, r.presentismo)),
+          htmlCelda(cantidadConPorcentaje(r.ausentes, r.ausentismo)),
           r.presentismo === null ? '—' : porcentaje(r.presentismo)
         ]
       : [
           r.anio,
           r.residentes,
-          r.estudiantesInscritos,
+          htmlCelda(cantidadConPorcentaje(r.estudiantesInscritos, r.participacion)),
           r.inscripciones,
           r.sedePrincipal || '—'
         ]
@@ -845,11 +903,14 @@
               </td>
               <td data-label="Provincia">${esc(r.provincia)}</td>
               <td data-label="Estudiantes residentes">${esc(r.residentes)}</td>
-              <td data-label="Estudiantes que se inscribieron">${esc(r.estudiantesInscritos)}</td>
+              <td data-label="Estudiantes que se inscribieron">${cantidadConPorcentaje(r.estudiantesInscritos, r.participacion)}</td>
               <td data-label="Participación">${meter(r.participacion)}</td>
               <td data-label="Inscripciones">${esc(r.inscripciones)}</td>
               <td data-label="Sedes usadas">${esc(r.sedesUsadas)}</td>
-              <td data-label="Sede más utilizada">${esc(r.sedePrincipal || '—')}</td>
+              <td data-label="Sede más utilizada">
+                <div>${esc(r.sedePrincipal || '—')}</div>
+                ${badgePorcentaje(r.concentracion)}
+              </td>
               <td data-label="Dependencia de sede principal">${meter(r.concentracion)}</td>
               <td data-label="Inscripciones por estudiante">${numero(r.promedioInscripciones)}</td>
               <td data-label="Patrón observado">${esc(r.patronUso)}</td>
@@ -887,6 +948,15 @@
     );
   }
 
+  function htmlCelda(html) {
+    return { __html: html };
+  }
+
+  function renderCell(v) {
+    if (v && typeof v === 'object' && v.__html !== undefined) return v.__html;
+    return esc(v);
+  }
+
   function tablaSimple(headers, rows) {
     if (!rows.length) {
       return '<div class="empty">Sin datos para los filtros seleccionados.</div>';
@@ -898,7 +968,7 @@
         <tbody>
           ${rows.map(row => `
             <tr>
-              ${row.map((v, i) => `<td data-label="${esc(headers[i])}">${esc(v)}</td>`).join('')}
+              ${row.map((v, i) => `<td data-label="${esc(headers[i])}">${renderCell(v)}</td>`).join('')}
             </tr>
           `).join('')}
         </tbody>
@@ -906,14 +976,41 @@
     `;
   }
 
-  function kpi(label, value) {
+  function kpi(label, value, extraClass = '') {
     return `
-      <div class="kpi">
+      <div class="kpi ${extraClass}">
         <div class="label">${esc(label)}</div>
-        <div class="value">${esc(value)}</div>
+        <div class="value">${value}</div>
       </div>
     `;
   }
+
+
+  function badgePorcentaje(v) {
+    if (v === null || v === undefined || Number.isNaN(Number(v))) return '';
+    const p = Number(v);
+    let cls = 'pct-low';
+    if (p >= 0.75) cls = 'pct-very-high';
+    else if (p >= 0.50) cls = 'pct-high';
+    else if (p >= 0.25) cls = 'pct-mid';
+    return `<span class="pct-badge ${cls}">${porcentaje(p)}</span>`;
+  }
+
+  function cantidadConPorcentaje(cantidad, proporcion) {
+    const c = cantidad === null || cantidad === undefined ? '—' : esc(cantidad);
+    const b = badgePorcentaje(proporcion);
+    return `<div class="metric-combo"><span class="count">${c}</span>${b}</div>`;
+  }
+
+  function claseKpiPorPorcentaje(v) {
+    if (v === null || v === undefined) return 'accent-neutral';
+    const p = Number(v);
+    if (p >= 0.75) return 'accent-blue';
+    if (p >= 0.50) return 'accent-green';
+    if (p >= 0.25) return 'accent-amber';
+    return 'accent-neutral';
+  }
+
 
   function meter(value) {
     if (value === null || value === undefined) return '—';
