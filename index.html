@@ -251,72 +251,6 @@
     }
 
 
-    .evo-filtros {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(160px, 0.7fr);
-      gap: 12px;
-      align-items: end;
-      margin: 14px 0 18px;
-    }
-
-    .evo-title {
-      font-weight: 700;
-      margin: 4px 0 12px;
-    }
-
-    .chart-panel {
-      margin-top: 20px;
-    }
-
-    .chart-panel h3 {
-      margin: 0 0 10px;
-      font-size: 15px;
-    }
-
-    .mini-chart {
-      min-height: 190px;
-      display: flex;
-      align-items: flex-end;
-      gap: 22px;
-      padding: 18px 12px 8px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #fafbfc;
-    }
-
-    .bar-item {
-      flex: 1 1 0;
-      min-width: 60px;
-      text-align: center;
-    }
-
-    .bar-value {
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .bar-track {
-      height: 120px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    .bar-fill {
-      width: min(58px, 75%);
-      background: var(--brand);
-      border-radius: 6px 6px 0 0;
-      min-height: 2px;
-    }
-
-    .bar-label {
-      margin-top: 7px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-
     .metric-combo {
       display: flex;
       align-items: baseline;
@@ -374,12 +308,61 @@
       border-left: 4px solid #98a2b3;
     }
 
+
+    .chart-panel {
+      margin-top: 20px;
+    }
+
+    .chart-panel h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .mini-chart {
+      min-height: 190px;
+      display: flex;
+      align-items: flex-end;
+      gap: 22px;
+      padding: 18px 12px 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fafbfc;
+    }
+
+    .bar-item {
+      flex: 1 1 0;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .bar-value {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .bar-track {
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .bar-fill {
+      width: min(58px, 75%);
+      background: var(--brand);
+      border-radius: 6px 6px 0 0;
+      min-height: 2px;
+    }
+
+    .bar-label {
+      margin-top: 7px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
-      .evo-filtros {
-        grid-template-columns: 1fr 1fr;
-      }
-
       .filtros {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -404,8 +387,7 @@
         border-radius: 12px;
       }
 
-      .filtros,
-      .evo-filtros {
+      .filtros {
         grid-template-columns: 1fr;
         gap: 10px;
       }
@@ -527,7 +509,6 @@
 
   <nav class="tabs">
     <button data-tab="resumen" class="active">Resumen</button>
-    <button data-tab="evolucion">Evolución 2024–2026</button>
     <button data-tab="candidatas">Nuevas sedes</button>
     <button data-tab="origen">Origen → sede</button>
     <button data-tab="sede">Sede → origen</button>
@@ -545,52 +526,6 @@
           Las inscripciones muestran demanda; las actas muestran uso efectivo de las mesas.
           Los conteos pequeños de estudiantes se ocultan según el umbral de privacidad.
         </p>
-      </div>
-    </section>
-
-
-    <section id="tab-evolucion" class="hidden">
-      <div class="panel">
-        <h2>Evolución 2024–2026</h2>
-        <p class="sub">
-          Compara los años con el mismo criterio. El filtro “Año” general no se aplica en esta vista.
-          Elegí qué querés comparar y la localidad, provincia, sede o región.
-        </p>
-
-        <div class="evo-filtros">
-          <div>
-            <label for="evo-tipo">Comparar por</label>
-            <select id="evo-tipo">
-              <option value="localidad">Localidad</option>
-              <option value="provincia">Provincia</option>
-              <option value="sede">Sede</option>
-              <option value="region">Región</option>
-            </select>
-          </div>
-          <div>
-            <label for="evo-valor">Valor</label>
-            <select id="evo-valor"></select>
-          </div>
-          <div>
-            <label>&nbsp;</label>
-            <button id="evo-actualizar">Comparar años</button>
-          </div>
-        </div>
-
-        <div id="evo-titulo" class="evo-title"></div>
-        <div id="tabla-evolucion" class="table-wrap"></div>
-
-        <div class="chart-panel">
-          <h3>Inscripciones por año</h3>
-          <div id="grafico-inscripciones" class="mini-chart"></div>
-        </div>
-
-        <div class="chart-panel">
-          <h3>Estudiantes con inscripciones por año</h3>
-          <div id="grafico-estudiantes" class="mini-chart"></div>
-        </div>
-
-        <div id="evo-nota" class="note"></div>
       </div>
     </section>
 
@@ -677,7 +612,6 @@
       llenarSelect('periodo', data.periodos);
 
       window.__opcionesSedes = data;
-      prepararEvolucion();
 
       filtrosIds.forEach(id => {
         document.getElementById(id).addEventListener('change', actualizar);
@@ -745,65 +679,70 @@
     document.getElementById('estado').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
   }
-
-
-  function prepararEvolucion() {
-    const tipo = document.getElementById('evo-tipo');
-    const valor = document.getElementById('evo-valor');
-    const boton = document.getElementById('evo-actualizar');
-
-    function actualizarValores() {
-      const opciones = window.__opcionesSedes || {};
-      const mapa = {
-        localidad: opciones.localidades || [],
-        provincia: opciones.provincias || [],
-        sede: opciones.sedes || [],
-        region: opciones.regiones || []
-      };
-      valor.innerHTML = '';
-      (mapa[tipo.value] || []).forEach(v => {
-        const op = document.createElement('option');
-        op.value = v;
-        op.textContent = v;
-        valor.appendChild(op);
-      });
-    }
-
-    tipo.addEventListener('change', actualizarValores);
-    boton.addEventListener('click', cargarEvolucion);
-    actualizarValores();
+  function mostrarNulo(v) {
+    return v === null || v === undefined ? '—' : v;
   }
 
-  function cargarEvolucion() {
-    const tipo = document.getElementById('evo-tipo').value;
-    const valor = document.getElementById('evo-valor').value;
+
+
+  function cargarEvolucionResumen() {
+    const anio = document.getElementById('anio').value;
+    const cont = document.getElementById('resumen-evolucion');
+
+    if (anio) {
+      cont.classList.add('hidden');
+      return;
+    }
+
+    const region = document.getElementById('region').value;
+    const provincia = document.getElementById('provincia').value;
+    const localidad = document.getElementById('localidad').value;
+    const sede = document.getElementById('sede').value;
     const periodo = document.getElementById('periodo').value;
 
-    const cont = document.getElementById('tabla-evolucion');
-    cont.innerHTML = '<div class="loading">Comparando años…</div>';
+    let tipo = '';
+    let valor = '';
+
+    if (localidad) {
+      tipo = 'localidad';
+      valor = localidad;
+    } else if (provincia) {
+      tipo = 'provincia';
+      valor = provincia;
+    } else if (sede) {
+      tipo = 'sede';
+      valor = sede;
+    } else if (region) {
+      tipo = 'region';
+      valor = region;
+    } else {
+      cont.classList.add('hidden');
+      return;
+    }
 
     const params = { api: 'evolution', tipo, valor };
     if (periodo) params.periodo = periodo;
 
     jsonp(params, (err, data) => {
       if (err) {
-        cont.innerHTML = '<div class="error">' + esc(err.message) + '</div>';
+        cont.classList.remove('hidden');
+        document.getElementById('tabla-evolucion-resumen').innerHTML =
+          '<div class="error">' + esc(err.message) + '</div>';
         return;
       }
-      renderEvolucion(data);
+      renderEvolucionResumen(data);
     });
   }
 
-  function renderEvolucion(data) {
-    const rows = data.filas || [];
-    const tipo = data.tipo || '';
-    const esSede = tipo === 'sede';
+  function renderEvolucionResumen(data) {
+    const cont = document.getElementById('resumen-evolucion');
+    cont.classList.remove('hidden');
 
-    document.getElementById('evo-titulo').textContent =
-      (data.valor || 'Todos') + (data.periodo ? ' · ' + data.periodo : '');
+    const rows = data.filas || [];
+    const esSede = data.tipo === 'sede';
 
     const headers = esSede
-      ? ['Año', 'Estudiantes que se inscribieron', 'Inscripciones', 'Presentes', 'Ausentes', 'Aprobación']
+      ? ['Año', 'Estudiantes que se inscribieron', 'Inscripciones', 'Presentes', 'Ausentes', 'Presentismo']
       : ['Año', 'Estudiantes residentes', 'Estudiantes que se inscribieron', 'Inscripciones', 'Sede más utilizada'];
 
     const valores = rows.map(r => esSede
@@ -824,7 +763,7 @@
         ]
     );
 
-    document.getElementById('tabla-evolucion').innerHTML = tablaSimple(headers, valores);
+    document.getElementById('tabla-evolucion-resumen').innerHTML = tablaSimple(headers, valores);
 
     renderMiniChart(
       'grafico-inscripciones',
@@ -862,10 +801,6 @@
         </div>
       `;
     }).join('');
-  }
-
-  function mostrarNulo(v) {
-    return v === null || v === undefined ? '—' : v;
   }
 
 
@@ -1059,7 +994,6 @@
 
       document.querySelectorAll('[id^="tab-"]').forEach(s => s.classList.add('hidden'));
       document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
-      if (btn.dataset.tab === 'evolucion') cargarEvolucion();
     });
   });
 
