@@ -1155,6 +1155,35 @@
     </section>
 
 
+
+    <section id="tab-topprovincias" class="hidden">
+      <div class="panel">
+        <h2>Top 10 de provincias para evaluar nuevas sedes</h2>
+        <p class="sub">
+          El ranking surge automáticamente de la demanda observada en 2024–2026.
+          Prioriza provincias sin sede activa y, dentro de ellas, la cantidad de estudiantes
+          distintos que efectivamente se inscribieron a finales.
+        </p>
+
+        <div class="year-legend">
+          <span class="a2024">2024</span>
+          <span class="a2025">2025</span>
+          <span class="a2026">2026</span>
+        </div>
+
+        <div id="topprov-chart" class="province-bars"></div>
+
+        <div id="tabla-topprovincias" class="table-wrap">
+          <div class="loading">Calculando top 10…</div>
+        </div>
+
+        <p class="note">
+          El orden ayuda a identificar provincias para evaluar, pero no reemplaza el análisis territorial:
+          una provincia puede tener mucha demanda y estar bien cubierta por una sede cercana en otra jurisdicción.
+        </p>
+      </div>
+    </section>
+
     <section id="tab-origen" class="hidden">
       <div class="panel">
         <h2>Origen → sede</h2>
@@ -1923,7 +1952,12 @@
       btn.classList.add('active');
 
       document.querySelectorAll('[id^="tab-"]').forEach(s => s.classList.add('hidden'));
-      document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+      const destino = document.getElementById('tab-' + btn.dataset.tab);
+      if (!destino) {
+        mostrarError('No se encontró la sección solicitada.');
+        return;
+      }
+      destino.classList.remove('hidden');
       if (btn.dataset.tab === 'candidatas') cargarOportunidades();
       if (btn.dataset.tab === 'topprovincias') cargarTopProvincias();
     });
