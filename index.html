@@ -13,34 +13,71 @@
       --line: #e4e7ec;
       --brand: #173f5f;
       --brand-soft: #eef4f8;
+      --danger: #a12727;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       color: var(--text);
       background: var(--bg);
+      overflow-x: hidden;
     }
+
     header {
       background: var(--panel);
       border-bottom: 1px solid var(--line);
       padding: 22px 28px;
     }
-    header h1 { margin: 0 0 6px; font-size: 24px; }
-    header p { margin: 0; color: var(--muted); }
-    main { max-width: 1500px; margin: auto; padding: 22px; }
+
+    header h1 {
+      margin: 0 0 6px;
+      font-size: clamp(21px, 3vw, 28px);
+      line-height: 1.15;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(14px, 2vw, 16px);
+      line-height: 1.4;
+    }
+
+    main {
+      width: min(100%, 1500px);
+      margin: 0 auto;
+      padding: 22px;
+    }
+
     .panel {
+      width: 100%;
+      min-width: 0;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
       padding: 20px;
       margin-bottom: 18px;
     }
+
     .filtros {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 12px;
+      align-items: end;
     }
+
+    .filtros > div {
+      min-width: 0;
+    }
+
     label {
       display: block;
       margin-bottom: 5px;
@@ -48,77 +85,295 @@
       font-weight: 700;
       color: var(--muted);
     }
-    select, button {
+
+    select,
+    button {
       width: 100%;
-      min-height: 40px;
+      min-width: 0;
+      min-height: 44px;
       border: 1px solid #cfd4dc;
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 9px 10px;
       background: white;
-      font-size: 14px;
+      color: var(--text);
+      font-size: 16px;
     }
-    button { cursor: pointer; font-weight: 700; }
-    .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
-    .tabs button { width: auto; border-color: var(--line); padding: 8px 14px; }
-    .tabs button.active { background: var(--brand); color: white; border-color: var(--brand); }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .tabs button {
+      width: auto;
+      min-height: 42px;
+      border-color: var(--line);
+      padding: 9px 14px;
+      white-space: nowrap;
+    }
+
+    .tabs button.active {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
     .indicadores {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 18px;
     }
+
     .kpi {
+      min-width: 0;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 12px;
       padding: 16px;
     }
-    .kpi .label { color: var(--muted); font-size: 12px; margin-bottom: 7px; }
-    .kpi .value { font-size: 26px; font-weight: 800; }
-    h2 { font-size: 19px; margin: 0 0 6px; }
-    .sub { color: var(--muted); margin: 0 0 14px; font-size: 13px; }
-    .table-wrap { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 760px; font-size: 13px; }
+
+    .kpi .label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+      margin-bottom: 7px;
+    }
+
+    .kpi .value {
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    h2 {
+      font-size: clamp(18px, 2.5vw, 21px);
+      margin: 0 0 6px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 14px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
     th {
       background: #f1f3f5;
       text-align: left;
       padding: 10px;
       border-bottom: 1px solid var(--line);
-      white-space: nowrap;
+      white-space: normal;
+      line-height: 1.25;
     }
-    td { padding: 10px; border-bottom: 1px solid #edf0f2; vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #edf0f2;
+      vertical-align: top;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
     .pill {
       display: inline-block;
+      max-width: 100%;
       border-radius: 999px;
       padding: 4px 8px;
       font-size: 12px;
       background: var(--brand-soft);
       color: var(--brand);
-      white-space: nowrap;
+      white-space: normal;
     }
+
     .meter {
-      width: 110px;
+      width: 100%;
+      min-width: 72px;
+      max-width: 120px;
       height: 7px;
       background: #e8ebef;
       border-radius: 999px;
       overflow: hidden;
       margin-top: 5px;
     }
-    .meter > div { height: 100%; background: var(--brand); }
-    .empty, .loading, .error {
-      padding: 35px;
+
+    .meter > div {
+      height: 100%;
+      background: var(--brand);
+    }
+
+    .empty,
+    .loading,
+    .error {
+      padding: 35px 16px;
       text-align: center;
       color: var(--muted);
     }
-    .error { color: #a12727; }
-    .note { font-size: 12px; color: var(--muted); margin-top: 12px; }
-    .hidden { display: none; }
-    @media (max-width: 700px) {
-      header { padding: 18px; }
-      main { padding: 12px; }
-      .panel { padding: 14px; }
-      table { min-width: 660px; }
+
+    .error {
+      color: var(--danger);
+    }
+
+    .note {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Tablet */
+    @media (max-width: 1100px) {
+      .filtros {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .indicadores {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 720px) {
+      header {
+        padding: 18px 16px;
+      }
+
+      main {
+        padding: 12px;
+      }
+
+      .panel {
+        padding: 14px;
+        border-radius: 12px;
+      }
+
+      .filtros {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .tabs button {
+        width: 100%;
+        white-space: normal;
+        line-height: 1.2;
+      }
+
+      .indicadores {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .kpi {
+        padding: 14px;
+      }
+
+      /* En móvil convertimos las tablas en tarjetas por fila */
+      .table-wrap {
+        overflow: visible;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+        width: 100%;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        display: grid;
+        gap: 12px;
+      }
+
+      tr {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: minmax(110px, 42%) minmax(0, 1fr);
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid #edf0f2;
+      }
+
+      td:last-child {
+        border-bottom: 0;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .meter {
+        max-width: none;
+      }
+    }
+
+    /* Teléfonos angostos */
+    @media (max-width: 420px) {
+      .tabs {
+        grid-template-columns: 1fr;
+      }
+
+      .indicadores {
+        grid-template-columns: 1fr;
+      }
+
+      td {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .kpi .value {
+        font-size: 24px;
+      }
     }
   </style>
 </head>
@@ -340,20 +595,20 @@
         <tbody>
           ${rows.map(r => `
             <tr>
-              <td>
+              <td data-label="Localidad">
                 <strong>${esc(r.localidad)}</strong><br>
                 <span class="pill">${esc(r.estado)}</span>
               </td>
-              <td>${esc(r.provincia)}</td>
-              <td>${esc(r.residentes)}</td>
-              <td>${esc(r.estudiantesInscritos)}</td>
-              <td>${meter(r.participacion)}</td>
-              <td>${esc(r.inscripciones)}</td>
-              <td>${esc(r.sedesUsadas)}</td>
-              <td>${esc(r.sedePrincipal || '—')}</td>
-              <td>${meter(r.concentracion)}</td>
-              <td>${numero(r.promedioInscripciones)}</td>
-              <td>${esc(r.patronUso)}</td>
+              <td data-label="Provincia">${esc(r.provincia)}</td>
+              <td data-label="Estudiantes residentes">${esc(r.residentes)}</td>
+              <td data-label="Estudiantes que se inscribieron">${esc(r.estudiantesInscritos)}</td>
+              <td data-label="Participación">${meter(r.participacion)}</td>
+              <td data-label="Inscripciones">${esc(r.inscripciones)}</td>
+              <td data-label="Sedes usadas">${esc(r.sedesUsadas)}</td>
+              <td data-label="Sede más utilizada">${esc(r.sedePrincipal || '—')}</td>
+              <td data-label="Dependencia de sede principal">${meter(r.concentracion)}</td>
+              <td data-label="Inscripciones por estudiante">${numero(r.promedioInscripciones)}</td>
+              <td data-label="Patrón observado">${esc(r.patronUso)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -397,7 +652,11 @@
       <table>
         <thead><tr>${headers.map(h => `<th>${esc(h)}</th>`).join('')}</tr></thead>
         <tbody>
-          ${rows.map(row => `<tr>${row.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('')}
+          ${rows.map(row => `
+            <tr>
+              ${row.map((v, i) => `<td data-label="${esc(headers[i])}">${esc(v)}</td>`).join('')}
+            </tr>
+          `).join('')}
         </tbody>
       </table>
     `;
