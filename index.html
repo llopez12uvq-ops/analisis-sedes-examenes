@@ -460,8 +460,56 @@
     .legend .l-amber::before { background: #c9992e; }
     .legend .l-red::before { background: #b75d5d; }
 
+
+    .oportunidad-filtros {
+      display: grid;
+      grid-template-columns: 1.2fr repeat(3, minmax(120px, .7fr)) minmax(170px, .9fr);
+      gap: 12px;
+      align-items: end;
+      margin: 14px 0 18px;
+    }
+
+    .oportunidad-filtros input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #cfd4dc;
+      border-radius: 8px;
+      padding: 9px 10px;
+      background: white;
+      color: var(--text);
+      font-size: 16px;
+    }
+
+    .trend {
+      font-weight: 700;
+    }
+
+    .trend-up { color: #246b43; }
+    .trend-down { color: #9b3d3d; }
+    .trend-flat { color: #667085; }
+
+    .year-strip {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .year-chip {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #f1f3f5;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
+      .oportunidad-filtros {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
       .filtros {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -486,7 +534,8 @@
         border-radius: 12px;
       }
 
-      .filtros {
+      .filtros,
+      .oportunidad-filtros {
         grid-template-columns: 1fr;
         gap: 10px;
       }
@@ -613,7 +662,7 @@
 
   <nav class="tabs">
     <button data-tab="resumen" class="active">Resumen</button>
-    <button data-tab="candidatas">Nuevas sedes</button>
+    <button data-tab="candidatas">Oportunidades de nuevas sedes</button>
     <button data-tab="origen">Origen → sede</button>
     <button data-tab="sede">Sede → origen</button>
     <button data-tab="propuesta">Propuesta 2027</button>
@@ -633,16 +682,60 @@
       </div>
     </section>
 
+    
     <section id="tab-candidatas" class="hidden">
       <div class="panel">
-        <h2>Localidades candidatas</h2>
+        <h2>Oportunidades de nuevas sedes</h2>
         <p class="sub">
-          No es un ranking automático. Compara demanda potencial, participación y dependencia
-          de las sedes actuales para fundamentar una decisión territorial.
+          La lista surge automáticamente de toda la base. Se excluyen las localidades que coinciden con una sede activa
+          y se muestran las que alcanzan los mínimos de evidencia definidos abajo.
         </p>
-        <div id="tabla-candidatas" class="table-wrap"></div>
+
+        <div class="oportunidad-filtros">
+          <div>
+            <label for="opp-region">Región</label>
+            <select id="opp-region">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <label for="opp-res">Mín. residentes</label>
+            <input id="opp-res" type="number" min="5" value="20">
+          </div>
+          <div>
+            <label for="opp-ins">Mín. estudiantes que se inscribieron</label>
+            <input id="opp-ins" type="number" min="5" value="5">
+          </div>
+          <div>
+            <label for="opp-anios">Mín. años con demanda</label>
+            <select id="opp-anios">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+            </select>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="opp-actualizar">Actualizar oportunidades</button>
+          </div>
+        </div>
+
+        <div class="section-caption">
+          <strong id="opp-total"></strong>
+          <span class="sub" style="margin:0">Orden: estudiantes que se inscribieron → residentes → inscripciones.</span>
+        </div>
+
+        <div id="tabla-oportunidades" class="table-wrap">
+          <div class="loading">Cargando oportunidades…</div>
+        </div>
+
+        <p class="note">
+          La tabla no asigna una prioridad automática. La decisión debe combinar demanda, persistencia, concentración de uso
+          y cobertura territorial. “Sede activa en la provincia” es contexto, no una exclusión automática.
+        </p>
       </div>
     </section>
+
 
     <section id="tab-origen" class="hidden">
       <div class="panel">
@@ -717,6 +810,7 @@
       llenarSelect('periodo', data.periodos);
 
       window.__opcionesSedes = data;
+      prepararOportunidades();
 
       filtrosIds.forEach(id => {
         document.getElementById(id).addEventListener('change', actualizar);
@@ -775,8 +869,6 @@
       kpi('Aprobados', mostrarNulo(r.aprobados)),
       kpi('Desaprobados', mostrarNulo(r.desaprobados))
     ].join('');
-
-    renderCandidatas(data.candidatas || []);
     renderOrigen(data.origenSede || []);
     renderSede(data.sedeOrigen || []);
     renderPropuesta(data.propuesta || []);
@@ -909,11 +1001,52 @@
   }
 
 
-  function renderCandidatas(rows) {
-    const cont = document.getElementById('tabla-candidatas');
+
+  function prepararOportunidades() {
+    const regionSel = document.getElementById('opp-region');
+    const regiones = (window.__opcionesSedes && window.__opcionesSedes.regiones) || [];
+    regiones.forEach(r => {
+      const op = document.createElement('option');
+      op.value = r;
+      op.textContent = r;
+      regionSel.appendChild(op);
+    });
+
+    document.getElementById('opp-actualizar').addEventListener('click', cargarOportunidades);
+  }
+
+  function cargarOportunidades() {
+    const cont = document.getElementById('tabla-oportunidades');
+    if (!cont) return;
+
+    cont.innerHTML = '<div class="loading">Analizando todas las localidades…</div>';
+
+    jsonp({
+      api: 'opportunities',
+      region: document.getElementById('opp-region').value,
+      minResidentes: document.getElementById('opp-res').value,
+      minInscriptos: document.getElementById('opp-ins').value,
+      minAnios: document.getElementById('opp-anios').value
+    }, (err, data) => {
+      if (err) {
+        cont.innerHTML = '<div class="error">' + esc(err.message) + '</div>';
+        return;
+      }
+      renderOportunidades(data.filas || []);
+    });
+  }
+
+  function renderOportunidades(rows) {
+    const cont = document.getElementById('tabla-oportunidades');
+    const total = document.getElementById('opp-total');
+    if (!cont) return;
+
+    total.textContent = rows.length
+      ? `${rows.length} localidades cumplen los criterios actuales`
+      : 'Ninguna localidad cumple los criterios actuales';
 
     if (!rows.length) {
-      cont.innerHTML = '<div class="empty">No hay localidades candidatas.</div>';
+      cont.innerHTML = '<div class="empty">Probá bajar alguno de los mínimos.</div>';
       return;
     }
 
@@ -922,16 +1055,16 @@
         <thead>
           <tr>
             <th>Localidad</th>
-            <th>Provincia</th>
-            <th>Estudiantes residentes</th>
+            <th>Región</th>
+            <th>Residentes</th>
             <th>Estudiantes que se inscribieron</th>
-            <th>Participación</th>
             <th>Inscripciones</th>
-            <th>Sedes usadas</th>
+            <th>Años con demanda</th>
             <th>Sede más utilizada</th>
-            <th>Dependencia de sede principal</th>
-            <th>Inscripciones por estudiante</th>
-            <th>Patrón observado</th>
+            <th>Concentración</th>
+            <th>Cobertura actual</th>
+            <th>Tendencia 2024–2026</th>
+            <th>Evidencia observada</th>
           </tr>
         </thead>
         <tbody>
@@ -939,32 +1072,45 @@
             <tr>
               <td data-label="Localidad">
                 <strong>${esc(r.localidad)}</strong><br>
-                <span class="pill">${esc(r.estado)}</span>
+                <span class="sub">${esc(r.provincia)}</span>
+                ${r.propuesta2027 ? '<br><span class="pill">Prevista 2027</span>' : ''}
               </td>
-              <td data-label="Provincia">${esc(r.provincia)}</td>
-              <td data-label="Estudiantes residentes">${esc(r.residentes)}</td>
-              <td data-label="Estudiantes que se inscribieron">${cantidadConPorcentaje(r.estudiantesInscritos, r.participacion)}</td>
-              <td data-label="Participación">${meter(r.participacion)}</td>
+              <td data-label="Región">${esc(r.region)}</td>
+              <td data-label="Residentes">${esc(r.residentes)}</td>
+              <td data-label="Estudiantes que se inscribieron">
+                ${cantidadConPorcentaje(r.estudiantesInscritos, r.participacion)}
+              </td>
               <td data-label="Inscripciones">${esc(r.inscripciones)}</td>
-              <td data-label="Sedes usadas">${esc(r.sedesUsadas)}</td>
-              <td data-label="Sede más utilizada">
-                <div>${esc(r.sedePrincipal || '—')}</div>
-                ${badgePorcentaje(r.concentracion)}
+              <td data-label="Años con demanda">${esc(r.aniosConDemanda)}</td>
+              <td data-label="Sede más utilizada">${esc(r.sedePrincipal || '—')}</td>
+              <td data-label="Concentración">${meter(r.concentracion)}</td>
+              <td data-label="Cobertura actual">${esc(r.coberturaProvincia)}</td>
+              <td data-label="Tendencia 2024–2026">
+                <div class="${claseTendencia(r.tendencia)}">${esc(r.tendencia)}</div>
+                <div class="year-strip">
+                  <span class="year-chip">2024: ${esc(r.porAnio?.['2024'] ?? 0)}</span>
+                  <span class="year-chip">2025: ${esc(r.porAnio?.['2025'] ?? 0)}</span>
+                  <span class="year-chip">2026: ${esc(r.porAnio?.['2026'] ?? 0)}</span>
+                </div>
               </td>
-              <td data-label="Dependencia de sede principal">${meter(r.concentracion)}</td>
-              <td data-label="Inscripciones por estudiante">${numero(r.promedioInscripciones)}</td>
-              <td data-label="Patrón observado">${esc(r.patronUso)}</td>
+              <td data-label="Evidencia observada">${esc(r.evidencia)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
-
-      <div class="note">
-        “Participación” = estudiantes que registran al menos una inscripción / estudiantes residentes.
-        “Dependencia” = proporción de inscripciones concentradas en la sede más utilizada.
-        Ninguna de las dos medidas, por sí sola, indica si conviene abrir una sede.
-      </div>
     `;
+  }
+
+  function claseTendencia(t) {
+    if (t === 'Creciente') return 'trend trend-up';
+    if (t === 'Descendente') return 'trend trend-down';
+    return 'trend trend-flat';
+  }
+
+
+  function renderCandidatas(rows) {
+    // Compatibilidad: esta función ya no usa una lista manual.
+    renderOportunidades(rows || []);
   }
 
   function renderOrigen(rows) {
@@ -1105,6 +1251,7 @@
 
       document.querySelectorAll('[id^="tab-"]').forEach(s => s.classList.add('hidden'));
       document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+      if (btn.dataset.tab === 'candidatas') cargarOportunidades();
     });
   });
 
