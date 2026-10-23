@@ -1005,6 +1005,81 @@
       }
     }
 
+
+    .venue-type-legend {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin:8px 0 14px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .venue-type-legend span::before {
+      content:"";
+      display:inline-block;
+      width:9px;
+      height:9px;
+      border-radius:3px;
+      margin-right:5px;
+    }
+    .legend-inst::before { background:#dfe7f3; border:1px solid #91a2ba; }
+    .legend-conv::before { background:#dff4ef; border:1px solid #5c9e8f; }
+
+    .sede-chip.institucional {
+      background:#eef3f8;
+      color:#39526d;
+    }
+    .sede-chip.convenio {
+      background:#dff4ef;
+      color:#28685d;
+      font-weight:700;
+    }
+
+    .tipo-sede-badge {
+      display:inline-block;
+      margin-top:4px;
+      padding:3px 7px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:700;
+    }
+    .tipo-sede-badge.institucional { background:#eef3f8; color:#39526d; }
+    .tipo-sede-badge.convenio { background:#dff4ef; color:#28685d; }
+
+    .venue-ranking-grid {
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      margin-top:10px;
+    }
+    .venue-year {
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+      min-width:0;
+    }
+    .venue-year.y2024 { border-top:4px solid #7c8db5; background:#f4f6fb; }
+    .venue-year.y2025 { border-top:4px solid #4f8a68; background:#f1f8f3; }
+    .venue-year.y2026 { border-top:4px solid #c9992e; background:#fff8e8; }
+    .venue-year h3 { margin:0 0 10px; font-size:16px; }
+
+    .venue-rank-item {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      padding:8px 0;
+      border-bottom:1px solid rgba(0,0,0,.07);
+      align-items:center;
+    }
+    .venue-rank-item:last-child { border-bottom:0; }
+    .venue-rank-name { min-width:0; font-weight:700; font-size:12px; }
+    .venue-rank-meta { color:var(--muted); font-size:10px; margin-top:2px; }
+    .venue-rank-pct { font-weight:800; font-size:12px; white-space:nowrap; }
+
+    @media (max-width: 900px) {
+      .venue-ranking-grid { grid-template-columns:1fr; }
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
       .year-compare-grid {
@@ -1175,11 +1250,11 @@
   </section>
 
   <nav class="tabs">
-    <button data-tab="resumen" class="active">Resumen</button>
-    <button data-tab="candidatas">Oportunidades de nuevas sedes</button>
-    <button data-tab="topprovincias">Top 10 provincias</button>
-    <button data-tab="propuesta">Mesas 2027</button>
-  </nav>
+      <button data-tab="resumen" class="active">Resumen</button>
+      <button data-tab="topprovincias">Top 10 provincias</button>
+      <button data-tab="candidatas">Oportunidades de nuevas sedes</button>
+      <button data-tab="propuesta">Mesas 2027</button>
+    </nav>
 
   <div id="estado" class="loading">Cargando…</div>
 
@@ -1200,11 +1275,25 @@
             <span class="a2025">2025</span>
             <span class="a2026">2026</span>
           </div>
+          <div class="venue-type-legend">
+            <span class="legend-inst">Sede institucional</span>
+            <span class="legend-conv">Convenio municipal</span>
+          </div>
         </div>
 
         <div id="lectura-periodo" class="period-summary"></div>
         <div id="tabla-comparacion-anual" class="table-wrap"></div>
         <div id="resumen-year-strip" class="summary-year-strip"></div>
+        <div class="section-caption" style="margin-top:20px">
+          <strong>Sedes más utilizadas por año</strong>
+          <span class="sub" style="margin:0">La vista general muestra varias sedes, no una única sede principal.</span>
+        </div>
+        <div class="venue-type-legend">
+          <span class="legend-inst">Sede institucional</span>
+          <span class="legend-conv">Convenio municipal</span>
+        </div>
+        <div id="ranking-sedes-anual" class="venue-ranking-grid"></div>
+
 
         <div class="compare-charts">
           <div class="chart-box">
@@ -1429,7 +1518,15 @@
 
   function llenarSelect(id, valores) {
     const el = document.getElementById(id);
-    el.innerHTML = '<option value="">Todos</option>';
+    const etiquetas = {
+      anio: 'Todos los años',
+      region: 'Todas las regiones',
+      provincia: 'Todas las provincias',
+      localidad: 'Todas las localidades',
+      sede: 'Todas las sedes',
+      periodo: 'Todos los períodos'
+    };
+    el.innerHTML = `<option value="">${etiquetas[id] || 'Todos'}</option>`;
 
     (valores || []).forEach(v => {
       const op = document.createElement('option');
@@ -1569,7 +1666,14 @@
       periodChip('Residentes', data.residentes ?? '—'),
       periodChip('Estudiantes que se inscribieron', data.estudiantesPeriodo ?? '—'),
       periodChip('Inscripciones 2024–2026', data.inscripcionesPeriodo ?? 0),
-      periodChip('Sede más utilizada', `${esc(data.sedePrincipalPeriodo || '—')}${data.concentracionPeriodo == null ? '' : ' · ' + porcentaje(data.concentracionPeriodo)}`)
+      periodChip(
+        (document.getElementById('region').value || document.getElementById('provincia').value || document.getElementById('localidad').value || document.getElementById('sede').value)
+          ? 'Sede más utilizada'
+          : 'Sedes analizadas',
+        (document.getElementById('region').value || document.getElementById('provincia').value || document.getElementById('localidad').value || document.getElementById('sede').value)
+          ? `${esc(data.sedePrincipalPeriodo || '—')}${data.concentracionPeriodo == null ? '' : ' · ' + porcentaje(data.concentracionPeriodo)}`
+          : `${(data.sedesRankingPeriodo || []).length} principales visibles abajo`
+      )
     ].join('');
 
     const byYear = {};
@@ -1644,6 +1748,29 @@
               <div class="m-value" style="font-size:13px">${esc(r.sedePrincipal || '—')}</div>
             </div>
           </div>
+        </div>
+      `).join('');
+    }
+
+
+    
+    const rankingCont = document.getElementById('ranking-sedes-anual');
+    if (rankingCont) {
+      rankingCont.innerHTML = rows.map(r => `
+        <div class="venue-year y${r.anio}">
+          <h3>${esc(r.anio)}</h3>
+          ${(r.sedesRanking || []).length ? (r.sedesRanking || []).map((s, idx) => `
+            <div class="venue-rank-item">
+              <div>
+                <div class="venue-rank-name">${idx + 1}. ${esc(s.sede)}</div>
+                <div class="venue-rank-meta">
+                  ${esc(s.estudiantes)} estudiantes · ${esc(s.inscripciones)} inscripciones
+                  ${s.tipoSede === 'convenio_municipal' ? ' · convenio municipal' : ''}
+                </div>
+              </div>
+              <div class="venue-rank-pct">${s.porcentaje == null ? '—' : porcentaje(s.porcentaje)}</div>
+            </div>
+          `).join('') : '<div class="sub">Sin datos</div>'}
         </div>
       `).join('');
     }
@@ -1863,7 +1990,7 @@
         <div class="periodo-count">${esc(p.cantidad)}</div>
         <div class="periodo-sedes">
           ${(p.sedes || []).map(s => `
-            <span class="sede-chip ${normalizarFront(s.situacion) === 'nueva' ? 'new' : ''}">
+            <span class="sede-chip ${s.tipoSede === 'convenio_municipal' ? 'convenio' : 'institucional'} ${normalizarFront(s.situacion) === 'nueva' ? 'new' : ''}">
               ${esc(s.sede)}
             </span>
           `).join('')}
@@ -1892,8 +2019,11 @@
               <td data-label="Región">${esc(r.region)}</td>
               <td data-label="Situación">
                 ${normalizarFront(r.situacion) === 'nueva'
-                  ? '<span class="coverage-none">Nueva 2027</span>'
-                  : esc(r.situacion)}
+                  ? '<span class="coverage-none">Nueva 2027</span><br>'
+                  : ''}
+                <span class="tipo-sede-badge ${r.tipoSede === 'convenio_municipal' ? 'convenio' : 'institucional'}">
+                  ${r.tipoSede === 'convenio_municipal' ? 'Convenio municipal' : 'Sede institucional'}
+                </span>
               </td>
               ${mesaYearCell(r, '2024', 'year-2024')}
               ${mesaYearCell(r, '2025', 'year-2025')}
