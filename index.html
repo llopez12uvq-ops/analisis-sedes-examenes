@@ -355,6 +355,10 @@
       min-height: 2px;
     }
 
+    .bar-item:nth-child(1) .bar-fill { background:#7c8db5; }
+    .bar-item:nth-child(2) .bar-fill { background:#4f8a68; }
+    .bar-item:nth-child(3) .bar-fill { background:#c9992e; }
+
     .bar-label {
       margin-top: 7px;
       font-size: 12px;
@@ -504,8 +508,130 @@
       white-space: nowrap;
     }
 
+
+    .year-compare {
+      margin-top: 18px;
+    }
+
+    .year-compare-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .year-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .year-card.y2024 { border-top: 5px solid #7c8db5; }
+    .year-card.y2025 { border-top: 5px solid #4f8a68; }
+    .year-card.y2026 { border-top: 5px solid #c9992e; }
+
+    .year-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .year-stat {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #edf0f2;
+    }
+
+    .year-stat:last-child {
+      border-bottom: none;
+    }
+
+    .year-stat .name {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .year-stat .num {
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .year-mini {
+      height: 7px;
+      background: #edf0f2;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .year-mini > span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .y2024 .year-mini > span { background: #7c8db5; }
+    .y2025 .year-mini > span { background: #4f8a68; }
+    .y2026 .year-mini > span { background: #c9992e; }
+
+    .compare-table th.year-2024,
+    .compare-table td.year-2024 { background: #f5f6fb; }
+    .compare-table th.year-2025,
+    .compare-table td.year-2025 { background: #f2f8f4; }
+    .compare-table th.year-2026,
+    .compare-table td.year-2026 { background: #fff8e8; }
+
+    .spark {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 24px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    .spark span {
+      width: 5px;
+      min-height: 2px;
+      border-radius: 2px 2px 0 0;
+      display: inline-block;
+    }
+
+    .spark span:nth-child(1) { background: #7c8db5; }
+    .spark span:nth-child(2) { background: #4f8a68; }
+    .spark span:nth-child(3) { background: #c9992e; }
+
+    .year-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 8px 0 14px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .year-legend span::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      display: inline-block;
+      border-radius: 3px;
+      margin-right: 5px;
+    }
+
+    .year-legend .a2024::before { background:#7c8db5; }
+    .year-legend .a2025::before { background:#4f8a68; }
+    .year-legend .a2026::before { background:#c9992e; }
+
     /* Tablet */
     @media (max-width: 1100px) {
+      .year-compare-grid {
+        grid-template-columns: 1fr;
+      }
+
       .oportunidad-filtros {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
@@ -632,6 +758,15 @@
 
       .kpi .value {
         font-size: 24px;
+      }
+
+
+      .compare-table td.year-2024,
+      .compare-table td.year-2025,
+      .compare-table td.year-2026 {
+        border-radius: 6px;
+        padding: 8px;
+        margin: 2px 0;
       }
 
       footer.app-footer {
@@ -882,6 +1017,100 @@
 
 
 
+
+  function cargarComparacionAnios() {
+    const anio = document.getElementById('anio').value;
+    const panel = document.getElementById('comparacion-anual');
+    if (!panel) return;
+
+    if (anio) {
+      panel.classList.add('hidden');
+      return;
+    }
+
+    const params = {
+      api: 'compare-years',
+      region: document.getElementById('region').value,
+      provincia: document.getElementById('provincia').value,
+      localidad: document.getElementById('localidad').value,
+      sede: document.getElementById('sede').value,
+      periodo: document.getElementById('periodo').value
+    };
+
+    jsonp(params, (err, data) => {
+      if (err) {
+        panel.classList.remove('hidden');
+        document.getElementById('comparacion-anual-grid').innerHTML =
+          '<div class="error">' + esc(err.message) + '</div>';
+        return;
+      }
+      renderComparacionAnios(data.filas || []);
+    });
+  }
+
+  function renderComparacionAnios(rows) {
+    const panel = document.getElementById('comparacion-anual');
+    const grid = document.getElementById('comparacion-anual-grid');
+    panel.classList.remove('hidden');
+
+    const maxInscripciones = Math.max(...rows.map(r => Number(r.inscripciones || 0)), 1);
+
+    grid.innerHTML = rows.map(r => {
+      const clase = 'y' + r.anio;
+      const anchoIns = Math.min(100, (Number(r.inscripciones || 0) / maxInscripciones) * 100);
+
+      return `
+        <div class="year-card ${clase}">
+          <h3>${esc(r.anio)}</h3>
+
+          <div class="year-stat">
+            <div>
+              <div class="name">Estudiantes que se inscribieron</div>
+            </div>
+            <div class="num">${esc(r.estudiantes)}</div>
+          </div>
+
+          <div class="year-stat">
+            <div>
+              <div class="name">Inscripciones a finales</div>
+              <div class="year-mini"><span style="width:${anchoIns.toFixed(1)}%"></span></div>
+            </div>
+            <div class="num">${esc(r.inscripciones)}</div>
+          </div>
+
+          <div class="year-stat">
+            <div class="name">Promedio de inscripciones</div>
+            <div class="num">${r.promedioInscripciones == null ? '—' : Number(r.promedioInscripciones).toFixed(1)}</div>
+          </div>
+
+          <div class="year-stat">
+            <div class="name">Presentes</div>
+            <div class="num">${cantidadConPorcentaje(r.presentes, r.presentismo)}</div>
+          </div>
+
+          <div class="year-stat">
+            <div class="name">Ausentes</div>
+            <div class="num">${cantidadConPorcentaje(r.ausentes, r.ausentismo)}</div>
+          </div>
+
+          <div class="year-stat">
+            <div class="name">Aprobados</div>
+            <div class="num">${cantidadConPorcentaje(r.aprobados, r.aprobacionSobrePresentes)}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function sparkAnios(obj) {
+    const vals = ['2024','2025','2026'].map(a => Number((obj && obj[a]) || 0));
+    const max = Math.max(...vals, 1);
+    return `<span class="spark" title="2024 / 2025 / 2026">${
+      vals.map(v => `<span style="height:${Math.max(2,(v/max)*24).toFixed(1)}px"></span>`).join('')
+    }</span>`;
+  }
+
+
   function cargarEvolucionResumen() {
     const anio = document.getElementById('anio').value;
     const cont = document.getElementById('resumen-evolucion');
@@ -1051,7 +1280,7 @@
     }
 
     cont.innerHTML = `
-      <table>
+      <table class="compare-table">
         <thead>
           <tr>
             <th>Localidad</th>
@@ -1063,7 +1292,10 @@
             <th>Sede más utilizada</th>
             <th>Concentración</th>
             <th>Cobertura actual</th>
-            <th>Tendencia 2024–2026</th>
+            <th class="year-2024">2024</th>
+            <th class="year-2025">2025</th>
+            <th class="year-2026">2026</th>
+            <th>Tendencia</th>
             <th>Evidencia observada</th>
           </tr>
         </thead>
@@ -1085,13 +1317,11 @@
               <td data-label="Sede más utilizada">${esc(r.sedePrincipal || '—')}</td>
               <td data-label="Concentración">${meter(r.concentracion)}</td>
               <td data-label="Cobertura actual">${esc(r.coberturaProvincia)}</td>
-              <td data-label="Tendencia 2024–2026">
-                <div class="${claseTendencia(r.tendencia)}">${esc(r.tendencia)}</div>
-                <div class="year-strip">
-                  <span class="year-chip">2024: ${esc(r.porAnio?.['2024'] ?? 0)}</span>
-                  <span class="year-chip">2025: ${esc(r.porAnio?.['2025'] ?? 0)}</span>
-                  <span class="year-chip">2026: ${esc(r.porAnio?.['2026'] ?? 0)}</span>
-                </div>
+              <td data-label="2024" class="year-2024"><strong>${esc(r.porAnio?.['2024'] ?? 0)}</strong></td>
+              <td data-label="2025" class="year-2025"><strong>${esc(r.porAnio?.['2025'] ?? 0)}</strong></td>
+              <td data-label="2026" class="year-2026"><strong>${esc(r.porAnio?.['2026'] ?? 0)}</strong></td>
+              <td data-label="Tendencia">
+                <div class="${claseTendencia(r.tendencia)}">${esc(r.tendencia)} ${sparkAnios(r.porAnio)}</div>
               </td>
               <td data-label="Evidencia observada">${esc(r.evidencia)}</td>
             </tr>
