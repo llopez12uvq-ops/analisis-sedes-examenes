@@ -626,6 +626,181 @@
     .year-legend .a2025::before { background:#4f8a68; }
     .year-legend .a2026::before { background:#c9992e; }
 
+
+    .period-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .period-chip {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fafbfc;
+      min-width: 0;
+    }
+
+    .period-chip .pc-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 5px;
+    }
+
+    .period-chip .pc-value {
+      font-size: 18px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .annual-compare-table {
+      table-layout: fixed;
+    }
+
+    .annual-compare-table th:first-child,
+    .annual-compare-table td:first-child {
+      width: 28%;
+      font-weight: 700;
+    }
+
+    .annual-compare-table th.y24, .annual-compare-table td.y24 { background:#f4f6fb; }
+    .annual-compare-table th.y25, .annual-compare-table td.y25 { background:#f1f8f3; }
+    .annual-compare-table th.y26, .annual-compare-table td.y26 { background:#fff8e8; }
+
+    .annual-cell {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .delta {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 999px;
+    }
+
+    .delta.up { background:#e7f4ec; color:#246b43; }
+    .delta.down { background:#fdecec; color:#963b3b; }
+    .delta.flat { background:#f1f3f5; color:#667085; }
+
+    .compare-charts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .chart-box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      background:#fafbfc;
+    }
+
+    .chart-box h3 {
+      margin:0 0 12px;
+      font-size:14px;
+    }
+
+    .bars3 {
+      height: 150px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-around;
+      gap:14px;
+    }
+
+    .b3 {
+      flex:1;
+      text-align:center;
+      min-width:0;
+    }
+
+    .b3-val {
+      font-size:12px;
+      font-weight:800;
+      margin-bottom:5px;
+    }
+
+    .b3-track {
+      height:100px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+
+    .b3-fill {
+      width:min(52px,70%);
+      min-height:2px;
+      border-radius:6px 6px 0 0;
+    }
+
+    .b3.y2024 .b3-fill { background:#7c8db5; }
+    .b3.y2025 .b3-fill { background:#4f8a68; }
+    .b3.y2026 .b3-fill { background:#c9992e; }
+
+    .b3-label {
+      margin-top:6px;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    @media (max-width: 900px) {
+      .period-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .compare-charts { grid-template-columns:1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .period-summary { grid-template-columns:1fr 1fr; }
+
+      .annual-compare-table,
+      .annual-compare-table thead,
+      .annual-compare-table tbody,
+      .annual-compare-table tr,
+      .annual-compare-table th,
+      .annual-compare-table td {
+        display: revert;
+        width:auto;
+      }
+
+      .annual-compare-table {
+        min-width: 680px;
+        table-layout:auto;
+      }
+
+      .annual-compare-table thead {
+        display: table-header-group;
+      }
+
+      .annual-compare-table tbody {
+        display: table-row-group;
+      }
+
+      .annual-compare-table tr {
+        display: table-row;
+        border:0;
+        padding:0;
+      }
+
+      .annual-compare-table th,
+      .annual-compare-table td {
+        display: table-cell;
+        padding:9px;
+      }
+
+      .annual-compare-table td::before {
+        display:none;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .period-summary { grid-template-columns:1fr; }
+    }
+
     /* Tablet */
     @media (max-width: 1100px) {
       .year-compare-grid {
@@ -808,11 +983,42 @@
   <div id="app" class="hidden">
     <section id="tab-resumen">
       <div id="kpis" class="indicadores"></div>
+
+      <div id="comparacion-anual" class="panel hidden">
+        <div class="section-caption">
+          <div>
+            <h2 style="margin:0">Comparación 2024–2026</h2>
+            <p class="sub" style="margin:6px 0 0">
+              La procedencia identifica al estudiante; las columnas muestran en qué año se inscribió a finales.
+            </p>
+          </div>
+          <div class="year-legend">
+            <span class="a2024">2024</span>
+            <span class="a2025">2025</span>
+            <span class="a2026">2026</span>
+          </div>
+        </div>
+
+        <div id="lectura-periodo" class="period-summary"></div>
+        <div id="tabla-comparacion-anual" class="table-wrap"></div>
+
+        <div class="compare-charts">
+          <div class="chart-box">
+            <h3>Estudiantes que se inscribieron</h3>
+            <div id="chart-estudiantes-anual" class="bars3"></div>
+          </div>
+          <div class="chart-box">
+            <h3>Inscripciones a finales</h3>
+            <div id="chart-inscripciones-anual" class="bars3"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="panel">
-        <h2>Cómo leer este tablero</h2>
-        <p class="sub">
-          Las inscripciones muestran demanda; las actas muestran uso efectivo de las mesas.
-          Los conteos pequeños de estudiantes se ocultan según el umbral de privacidad.
+        <h2>Cómo leer el resumen</h2>
+        <p class="sub" style="margin-bottom:0">
+          “Estudiantes que se inscribieron” cuenta personas distintas. “Inscripciones” cuenta todas sus inscripciones a finales.
+          Cuando Año = Todos, la comparación anual se muestra separada para evitar mezclar 2024, 2025 y 2026.
         </p>
       </div>
     </section>
@@ -822,7 +1028,7 @@
       <div class="panel">
         <h2>Oportunidades de nuevas sedes</h2>
         <p class="sub">
-          La lista surge automáticamente de toda la base. Se excluyen las localidades que coinciden con una sede activa
+          La lista surge automáticamente de toda la base y sigue las inscripciones de cada estudiante en 2024, 2025 y 2026. Se excluyen las localidades que coinciden con una sede activa
           y se muestran las que alcanzan los mínimos de evidencia definidos abajo.
         </p>
 
@@ -1028,79 +1234,135 @@
       return;
     }
 
-    const params = {
+    jsonp({
       api: 'compare-years',
       region: document.getElementById('region').value,
       provincia: document.getElementById('provincia').value,
       localidad: document.getElementById('localidad').value,
       sede: document.getElementById('sede').value,
       periodo: document.getElementById('periodo').value
-    };
-
-    jsonp(params, (err, data) => {
+    }, (err, data) => {
       if (err) {
         panel.classList.remove('hidden');
-        document.getElementById('comparacion-anual-grid').innerHTML =
+        document.getElementById('tabla-comparacion-anual').innerHTML =
           '<div class="error">' + esc(err.message) + '</div>';
         return;
       }
-      renderComparacionAnios(data.filas || []);
+      renderComparacionAnios(data);
     });
   }
 
-  function renderComparacionAnios(rows) {
+  function renderComparacionAnios(data) {
     const panel = document.getElementById('comparacion-anual');
-    const grid = document.getElementById('comparacion-anual-grid');
     panel.classList.remove('hidden');
 
-    const maxInscripciones = Math.max(...rows.map(r => Number(r.inscripciones || 0)), 1);
+    const rows = data.filas || [];
+    const periodo = document.getElementById('lectura-periodo');
 
-    grid.innerHTML = rows.map(r => {
-      const clase = 'y' + r.anio;
-      const anchoIns = Math.min(100, (Number(r.inscripciones || 0) / maxInscripciones) * 100);
+    periodo.innerHTML = [
+      periodChip('Residentes', data.residentes ?? '—'),
+      periodChip('Estudiantes que se inscribieron', data.estudiantesPeriodo ?? '—'),
+      periodChip('Inscripciones 2024–2026', data.inscripcionesPeriodo ?? 0),
+      periodChip('Sede más utilizada', `${esc(data.sedePrincipalPeriodo || '—')}${data.concentracionPeriodo == null ? '' : ' · ' + porcentaje(data.concentracionPeriodo)}`)
+    ].join('');
 
-      return `
-        <div class="year-card ${clase}">
-          <h3>${esc(r.anio)}</h3>
+    const byYear = {};
+    rows.forEach(r => byYear[r.anio] = r);
+    const y24 = byYear['2024'] || {};
+    const y25 = byYear['2025'] || {};
+    const y26 = byYear['2026'] || {};
 
-          <div class="year-stat">
-            <div>
-              <div class="name">Estudiantes que se inscribieron</div>
-            </div>
-            <div class="num">${esc(r.estudiantes)}</div>
-          </div>
+    const metrics = [
+      ['Estudiantes que se inscribieron',
+        annualValue(y24.estudiantes, y24.participacion, null),
+        annualValue(y25.estudiantes, y25.participacion, y25.variacionEstudiantes),
+        annualValue(y26.estudiantes, y26.participacion, y26.variacionEstudiantes)],
+      ['Inscripciones a finales',
+        annualValue(y24.inscripciones, null, null),
+        annualValue(y25.inscripciones, null, y25.variacionInscripciones),
+        annualValue(y26.inscripciones, null, y26.variacionInscripciones)],
+      ['Inscripciones por estudiante',
+        y24.promedioInscripciones == null ? '—' : Number(y24.promedioInscripciones).toFixed(1),
+        y25.promedioInscripciones == null ? '—' : Number(y25.promedioInscripciones).toFixed(1),
+        y26.promedioInscripciones == null ? '—' : Number(y26.promedioInscripciones).toFixed(1)],
+      ['Sede más utilizada',
+        sedeAnnual(y24),
+        sedeAnnual(y25),
+        sedeAnnual(y26)]
+    ];
 
-          <div class="year-stat">
-            <div>
-              <div class="name">Inscripciones a finales</div>
-              <div class="year-mini"><span style="width:${anchoIns.toFixed(1)}%"></span></div>
-            </div>
-            <div class="num">${esc(r.inscripciones)}</div>
-          </div>
+    document.getElementById('tabla-comparacion-anual').innerHTML = `
+      <table class="annual-compare-table">
+        <thead>
+          <tr>
+            <th>Indicador</th>
+            <th class="y24">2024</th>
+            <th class="y25">2025</th>
+            <th class="y26">2026</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${metrics.map(row => `
+            <tr>
+              <td>${esc(row[0])}</td>
+              <td class="y24">${row[1]}</td>
+              <td class="y25">${row[2]}</td>
+              <td class="y26">${row[3]}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
 
-          <div class="year-stat">
-            <div class="name">Promedio de inscripciones</div>
-            <div class="num">${r.promedioInscripciones == null ? '—' : Number(r.promedioInscripciones).toFixed(1)}</div>
-          </div>
+    renderBars3('chart-estudiantes-anual', rows, 'estudiantesValorSeguro', 'estudiantes');
+    renderBars3('chart-inscripciones-anual', rows, 'inscripciones', 'inscripciones');
+  }
 
-          <div class="year-stat">
-            <div class="name">Presentes</div>
-            <div class="num">${cantidadConPorcentaje(r.presentes, r.presentismo)}</div>
-          </div>
 
-          <div class="year-stat">
-            <div class="name">Ausentes</div>
-            <div class="num">${cantidadConPorcentaje(r.ausentes, r.ausentismo)}</div>
-          </div>
+  function periodChip(label, value) {
+    return `<div class="period-chip">
+      <div class="pc-label">${esc(label)}</div>
+      <div class="pc-value">${value}</div>
+    </div>`;
+  }
 
-          <div class="year-stat">
-            <div class="name">Aprobados</div>
-            <div class="num">${cantidadConPorcentaje(r.aprobados, r.aprobacionSobrePresentes)}</div>
-          </div>
-        </div>
-      `;
+  function annualValue(value, pct, delta) {
+    const p = pct == null ? '' : ` <span class="pct-badge pct-high">${porcentaje(pct)}</span>`;
+    const d = delta == null ? '' : deltaBadge(delta);
+    return `<div class="annual-cell"><strong>${esc(value ?? '—')}</strong>${p}${d}</div>`;
+  }
+
+  function deltaBadge(v) {
+    if (v == null || !isFinite(Number(v))) return '';
+    const n = Number(v);
+    const cls = n > 0.005 ? 'up' : (n < -0.005 ? 'down' : 'flat');
+    const sign = n > 0 ? '+' : '';
+    return `<span class="delta ${cls}">${sign}${(n*100).toFixed(0)}%</span>`;
+  }
+
+  function sedeAnnual(r) {
+    if (!r || !r.sedePrincipal || r.sedePrincipal === '—') return '—';
+    const pct = r.concentracion == null ? '' : ` <span class="pct-badge pct-high">${porcentaje(r.concentracion)}</span>`;
+    return `<div class="annual-cell"><strong>${esc(r.sedePrincipal)}</strong>${pct}</div>`;
+  }
+
+  function renderBars3(id, rows, numericKey, displayKey) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const vals = rows.map(r => r[numericKey] == null ? null : Number(r[numericKey]));
+    const max = Math.max(...vals.filter(v => v != null), 1);
+
+    el.innerHTML = rows.map((r, i) => {
+      const n = vals[i];
+      const h = n == null ? 0 : Math.max(2, (n / max) * 100);
+      return `<div class="b3 y${r.anio}">
+        <div class="b3-val">${esc(r[displayKey] ?? '—')}</div>
+        <div class="b3-track">${n == null ? '' : `<div class="b3-fill" style="height:${h}px"></div>`}</div>
+        <div class="b3-label">${esc(r.anio)}</div>
+      </div>`;
     }).join('');
   }
+
 
   function sparkAnios(obj) {
     const vals = ['2024','2025','2026'].map(a => Number((obj && obj[a]) || 0));
@@ -1284,19 +1546,14 @@
         <thead>
           <tr>
             <th>Localidad</th>
-            <th>Región</th>
             <th>Residentes</th>
-            <th>Estudiantes que se inscribieron</th>
-            <th>Inscripciones</th>
-            <th>Años con demanda</th>
-            <th>Sede más utilizada</th>
-            <th>Concentración</th>
-            <th>Cobertura actual</th>
             <th class="year-2024">2024</th>
             <th class="year-2025">2025</th>
             <th class="year-2026">2026</th>
+            <th>Total 2024–2026</th>
+            <th>Sede más utilizada</th>
+            <th>Cobertura actual</th>
             <th>Tendencia</th>
-            <th>Evidencia observada</th>
           </tr>
         </thead>
         <tbody>
@@ -1304,31 +1561,41 @@
             <tr>
               <td data-label="Localidad">
                 <strong>${esc(r.localidad)}</strong><br>
-                <span class="sub">${esc(r.provincia)}</span>
+                <span class="sub">${esc(r.provincia)} · ${esc(r.region)}</span>
                 ${r.propuesta2027 ? '<br><span class="pill">Prevista 2027</span>' : ''}
               </td>
-              <td data-label="Región">${esc(r.region)}</td>
-              <td data-label="Residentes">${esc(r.residentes)}</td>
-              <td data-label="Estudiantes que se inscribieron">
-                ${cantidadConPorcentaje(r.estudiantesInscritos, r.participacion)}
+              <td data-label="Residentes"><strong>${esc(r.residentes)}</strong></td>
+              ${oppYearCell(r, '2024', 'year-2024')}
+              ${oppYearCell(r, '2025', 'year-2025')}
+              ${oppYearCell(r, '2026', 'year-2026')}
+              <td data-label="Total 2024–2026">
+                <strong>${esc(r.estudiantesPeriodo)}</strong> estudiantes<br>
+                <span class="sub">${esc(r.inscripcionesPeriodo)} inscripciones</span>
+                ${r.participacionPeriodo == null ? '' : `<br>${badgePorcentaje(r.participacionPeriodo)} de residentes`}
               </td>
-              <td data-label="Inscripciones">${esc(r.inscripciones)}</td>
-              <td data-label="Años con demanda">${esc(r.aniosConDemanda)}</td>
-              <td data-label="Sede más utilizada">${esc(r.sedePrincipal || '—')}</td>
-              <td data-label="Concentración">${meter(r.concentracion)}</td>
+              <td data-label="Sede más utilizada">
+                <strong>${esc(r.sedePrincipal || '—')}</strong>
+                ${r.concentracion == null ? '' : `<br>${badgePorcentaje(r.concentracion)} de inscripciones`}
+              </td>
               <td data-label="Cobertura actual">${esc(r.coberturaProvincia)}</td>
-              <td data-label="2024" class="year-2024"><strong>${esc(r.porAnio?.['2024'] ?? 0)}</strong></td>
-              <td data-label="2025" class="year-2025"><strong>${esc(r.porAnio?.['2025'] ?? 0)}</strong></td>
-              <td data-label="2026" class="year-2026"><strong>${esc(r.porAnio?.['2026'] ?? 0)}</strong></td>
               <td data-label="Tendencia">
-                <div class="${claseTendencia(r.tendencia)}">${esc(r.tendencia)} ${sparkAnios(r.porAnio)}</div>
+                <span class="${claseTendencia(r.tendencia)}">${esc(r.tendencia)}</span>
+                ${sparkAnios(r.inscripcionesPorAnio)}
               </td>
-              <td data-label="Evidencia observada">${esc(r.evidencia)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     `;
+  }
+
+  function oppYearCell(r, year, cls) {
+    const est = r.estudiantesPorAnio?.[year] ?? '—';
+    const ins = r.inscripcionesPorAnio?.[year] ?? 0;
+    return `<td data-label="${year}" class="${cls}">
+      <strong>${esc(est)}</strong> estudiantes<br>
+      <span class="sub">${esc(ins)} inscripciones</span>
+    </td>`;
   }
 
   function claseTendencia(t) {
